@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Telecom Churn Scoring</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #15202b;
+      --muted: #617080;
+      --line: #d9e2ea;
+      --panel: #ffffff;
+      --bg: #f5f7fa;
+      --teal: #097969;
+      --blue: #2662d9;
+      --amber: #b36b00;
+      --red: #bd2d2d;
+      --green: #287a3e;
+      --shadow: 0 16px 40px rgba(21, 32, 43, 0.10);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      min-height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 2.4vw, 2.35rem);
+      line-height: 1.08;
+      font-weight: 760;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .status {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(96px, 1fr));
+      gap: 10px;
+      min-width: min(410px, 100%);
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      background: #f9fbfc;
+      border-radius: 8px;
+      padding: 10px 12px;
+      min-height: 62px;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 1.18rem;
+    }
+
+    main {
+      padding: 28px 0 36px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1.02rem;
+      font-weight: 760;
+    }
+
+    .grid {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: #354657;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #c8d4df;
+      border-radius: 6px;
+      background: #fff;
+      color: var(--ink);
+      padding: 9px 10px;
+      font: inherit;
+      font-size: 0.96rem;
+    }
+
+    input:focus,
+    select:focus,
+    button:focus {
+      outline: 3px solid rgba(38, 98, 217, 0.18);
+      outline-offset: 1px;
+      border-color: var(--blue);
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .actions {
+      padding: 0 20px 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      min-height: 42px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font: inherit;
+      font-weight: 760;
+      cursor: pointer;
+      background: #ecf1f5;
+      color: var(--ink);
+    }
+
+    button.primary {
+      background: var(--teal);
+      color: #fff;
+    }
+
+    button:hover {
+      filter: brightness(0.97);
+    }
+
+    .result {
+      padding: 20px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .score-row {
+      display: grid;
+      grid-template-columns: 130px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+    }
+
+    .dial {
+      width: 130px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at center, #fff 0 56%, transparent 57%),
+        conic-gradient(var(--green) 0deg, var(--green) var(--angle), #e6edf3 var(--angle), #e6edf3 360deg);
+      border: 1px solid var(--line);
+    }
+
+    .dial strong {
+      font-size: 1.45rem;
+    }
+
+    .verdict {
+      display: grid;
+      gap: 8px;
+    }
+
+    .verdict h2 {
+      margin: 0;
+      font-size: 1.72rem;
+      line-height: 1.1;
+    }
+
+    .band {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 800;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      background: #eaf5ee;
+      color: var(--green);
+    }
+
+    .band.elevated {
+      background: #fff3da;
+      color: var(--amber);
+    }
+
+    .band.high {
+      background: #fde7e7;
+      color: var(--red);
+    }
+
+    .band.watch {
+      background: #eaf0ff;
+      color: var(--blue);
+    }
+
+    .signals {
+      display: grid;
+      gap: 8px;
+    }
+
+    .signals div {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 10px 12px;
+      background: #f9fbfc;
+      font-weight: 650;
+    }
+
+    .json-box {
+      margin: 0;
+      padding: 14px;
+      background: #101820;
+      color: #d7f7ef;
+      border-radius: 6px;
+      overflow: auto;
+      max-height: 260px;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .error {
+      color: var(--red);
+      font-weight: 760;
+    }
+
+    @media (max-width: 900px) {
+      .topbar,
+      .workspace,
+      .score-row {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .status {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .shell {
+        width: min(100% - 20px, 1180px);
+      }
+
+      .grid,
+      .status {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-header,
+      .actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="shell topbar">
+      <div>
+        <h1>Telecom Churn Scoring</h1>
+        <p class="subtitle">Model-backed customer retention assessment</p>
+      </div>
+      <div class="status" aria-label="Model metrics">
+        <div class="metric"><span>Accuracy</span><strong id="metric-accuracy">...</strong></div>
+        <div class="metric"><span>F1</span><strong id="metric-f1">...</strong></div>
+        <div class="metric"><span>AUC</span><strong id="metric-auc">...</strong></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="shell workspace">
+      <section class="panel" aria-labelledby="profile-title">
+        <div class="panel-header">
+          <h2 class="panel-title" id="profile-title">Customer profile</h2>
+          <button type="button" id="sample-button">Load sample</button>
+        </div>
+        <form id="churn-form">
+          <div class="grid">
+            <label>Gender
+              <select name="gender">
+                <option>Female</option>
+                <option>Male</option>
+              </select>
+            </label>
+            <label>Senior citizen
+              <select name="senior_citizen">
+                <option>No</option>
+                <option>Yes</option>
+              </select>
+            </label>
+            <label>Partner
+              <select name="partner">
+                <option>No</option>
+                <option>Yes</option>
+              </select>
+            </label>
+            <label>Dependents
+              <select name="dependents">
+                <option>No</option>
+                <option>Yes</option>
+              </select>
+            </label>
+            <label>Tenure months
+              <input name="tenure_months" type="number" min="1" max="72" step="1" value="12">
+            </label>
+            <label>Monthly charges
+              <input name="monthly_charges" type="number" min="18" max="125" step="0.01" value="89.90">
+            </label>
+            <label>Total charges
+              <input name="total_charges" type="number" min="18" step="0.01" value="1078.80">
+            </label>
+            <label>Contract
+              <select name="contract">
+                <option>Month-to-month</option>
+                <option>One year</option>
+                <option>Two year</option>
+              </select>
+            </label>
+            <label>Phone service
+              <select name="phone_service">
+                <option>Yes</option>
+                <option>No</option>
+              </select>
+            </label>
+            <label>Multiple lines
+              <select name="multiple_lines">
+                <option>No</option>
+                <option>Yes</option>
+                <option>No phone service</option>
+              </select>
+            </label>
+            <label>Internet service
+              <select name="internet_service">
+                <option>Fiber optic</option>
+                <option>DSL</option>
+                <option>No</option>
+              </select>
+            </label>
+            <label>Online security
+              <select name="online_security">
+                <option>No</option>
+                <option>Yes</option>
+                <option>No internet service</option>
+              </select>
+            </label>
+            <label>Online backup
+              <select name="online_backup">
+                <option>No</option>
+                <option>Yes</option>
+                <option>No internet service</option>
+              </select>
+            </label>
+            <label>Device protection
+              <select name="device_protection">
+                <option>No</option>
+                <option>Yes</option>
+                <option>No internet service</option>
+              </select>
+            </label>
+            <label>Tech support
+              <select name="tech_support">
+                <option>No</option>
+                <option>Yes</option>
+                <option>No internet service</option>
+              </select>
+            </label>
+            <label>Streaming TV
+              <select name="streaming_tv">
+                <option>Yes</option>
+                <option>No</option>
+                <option>No internet service</option>
+              </select>
+            </label>
+            <label>Streaming movies
+              <select name="streaming_movies">
+                <option>Yes</option>
+                <option>No</option>
+                <option>No internet service</option>
+              </select>
+            </label>
+            <label>Paperless billing
+              <select name="paperless_billing">
+                <option>Yes</option>
+                <option>No</option>
+              </select>
+            </label>
+            <label class="full">Payment method
+              <select name="payment_method">
+                <option>Electronic check</option>
+                <option>Bank transfer</option>
+                <option>Credit card</option>
+                <option>Mailed check</option>
+              </select>
+            </label>
+          </div>
+          <div class="actions">
+            <button class="primary" type="submit">Score customer</button>
+            <button type="reset">Reset</button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="panel" aria-labelledby="result-title">
+        <div class="panel-header">
+          <h2 class="panel-title" id="result-title">Prediction</h2>
+        </div>
+        <div class="result">
+          <div class="score-row">
+            <div class="dial" id="dial" style="--angle: 0deg"><strong id="probability">--</strong></div>
+            <div class="verdict">
+              <span class="band watch" id="risk-band">Awaiting score</span>
+              <h2 id="prediction-label">Ready</h2>
+              <div id="threshold-text">Threshold: --</div>
+            </div>
+          </div>
+          <div class="signals" id="signals"></div>
+          <pre class="json-box" id="json-output">{}</pre>
+          <div class="error" id="error"></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const form = document.querySelector("#churn-form");
+    const output = document.querySelector("#json-output");
+    const errorBox = document.querySelector("#error");
+    const probability = document.querySelector("#probability");
+    const predictionLabel = document.querySelector("#prediction-label");
+    const thresholdText = document.querySelector("#threshold-text");
+    const riskBand = document.querySelector("#risk-band");
+    const dial = document.querySelector("#dial");
+    const signals = document.querySelector("#signals");
+
+    const sample = {
+      gender: "Female",
+      senior_citizen: "No",
+      partner: "No",
+      dependents: "No",
+      tenure_months: 6,
+      phone_service: "Yes",
+      multiple_lines: "Yes",
+      internet_service: "Fiber optic",
+      online_security: "No",
+      online_backup: "No",
+      device_protection: "No",
+      tech_support: "No",
+      streaming_tv: "Yes",
+      streaming_movies: "Yes",
+      contract: "Month-to-month",
+      paperless_billing: "Yes",
+      payment_method: "Electronic check",
+      monthly_charges: 99.95,
+      total_charges: 599.7
+    };
+
+    function valueForField(field) {
+      if (field.type === "number") {
+        return Number(field.value);
+      }
+      return field.value;
+    }
+
+    function formPayload() {
+      return Object.fromEntries([...new FormData(form).entries()].map(([key, value]) => {
+        const field = form.elements[key];
+        return [key, field.type === "number" ? Number(value) : value];
+      }));
+    }
+
+    function applySample() {
+      Object.entries(sample).forEach(([key, value]) => {
+        if (form.elements[key]) {
+          form.elements[key].value = value;
+        }
+      });
+    }
+
+    function updateResult(payload) {
+      const pct = Math.round(payload.churn_probability * 1000) / 10;
+      probability.textContent = `${pct}%`;
+      predictionLabel.textContent = payload.prediction_label;
+      thresholdText.textContent = `Threshold: ${payload.threshold}`;
+      output.textContent = JSON.stringify(payload, null, 2);
+      dial.style.setProperty("--angle", `${payload.churn_probability * 360}deg`);
+      riskBand.textContent = payload.risk_band;
+      riskBand.className = `band ${payload.risk_band}`;
+      signals.innerHTML = "";
+      (payload.risk_signals || []).forEach((signal) => {
+        const item = document.createElement("div");
+        item.textContent = signal;
+        signals.appendChild(item);
+      });
+    }
+
+    async function scoreCustomer(event) {
+      event.preventDefault();
+      errorBox.textContent = "";
+      const response = await fetch("/predict", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(formPayload())
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || "Prediction failed");
+      }
+      updateResult(payload);
+    }
+
+    async function loadMetrics() {
+      const response = await fetch("/metrics");
+      if (!response.ok) {
+        return;
+      }
+      const payload = await response.json();
+      const test = payload.metrics.test;
+      document.querySelector("#metric-accuracy").textContent = test.accuracy.toFixed(3);
+      document.querySelector("#metric-f1").textContent = test.f1.toFixed(3);
+      document.querySelector("#metric-auc").textContent = test.auc.toFixed(3);
+    }
+
+    document.querySelector("#sample-button").addEventListener("click", () => {
+      applySample();
+      form.requestSubmit();
+    });
+
+    form.addEventListener("submit", (event) => {
+      scoreCustomer(event).catch((error) => {
+        errorBox.textContent = error.message;
+      });
+    });
+
+    form.addEventListener("reset", () => {
+      setTimeout(() => {
+        probability.textContent = "--";
+        predictionLabel.textContent = "Ready";
+        thresholdText.textContent = "Threshold: --";
+        riskBand.textContent = "Awaiting score";
+        riskBand.className = "band watch";
+        output.textContent = "{}";
+        signals.innerHTML = "";
+        dial.style.setProperty("--angle", "0deg");
+        errorBox.textContent = "";
+      }, 0);
+    });
+
+    applySample();
+    loadMetrics();
+    form.requestSubmit();
+  </script>
+</body>
+</html>
+
