@@ -1,5 +1,7 @@
 # Predict Customer Churn for a Telecom Company
 
+Telecom customer churn prediction project with synthetic dataset generation, NumPy logistic regression, held-out evaluation metrics, deployable prediction API, and browser demo.
+
 An interview-ready churn prediction project with clean training code, held-out metrics, a deployable local API, and a browser demo.
 
 ## What It Builds
@@ -26,15 +28,15 @@ If your machine uses a different Python launcher, replace `python` with that com
 
 ```text
 .
-├── app.py                         # API/demo entrypoint
-├── train.py                       # Training entrypoint
-├── data/telecom_churn.csv         # Generated training data
-├── artifacts/churn_model.json     # Saved model and preprocessing artifact
-├── artifacts/metrics.json         # Metrics snapshot
-├── demo/index.html                # Browser demo
-├── reports/model_report.md        # Interview-friendly model report
-├── src/churn_model/               # Package code
-└── tests/                         # Unit tests
++-- app.py                         # API/demo entrypoint
++-- train.py                       # Training entrypoint
++-- data/telecom_churn.csv         # Generated training data
++-- artifacts/churn_model.json     # Saved model and preprocessing artifact
++-- artifacts/metrics.json         # Metrics snapshot
++-- demo/index.html                # Browser demo
++-- reports/model_report.md        # Interview-friendly model report
++-- src/churn_model/               # Package code
++-- tests/                         # Unit tests
 ```
 
 ## API
@@ -96,4 +98,3 @@ The target column must be `churn` with `0` for no churn and `1` for churn.
 ```powershell
 python -m unittest discover -s tests
 ```
-
